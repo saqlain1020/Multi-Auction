@@ -5,7 +5,8 @@
     "hardhat": "^2.22.11"
   },
   "scripts": {
-    "build": "hardhat compile"
+    "build": "hardhat compile",
+    "test": "hardhat test --grep MultiAuction"
   },
   "dependencies": {
     "@nomicfoundation/hardhat-ignition": "^0.15.5",
@@ -13,6 +14,7 @@
     "@nomicfoundation/hardhat-network-helpers": "^1.0.12",
     "@nomicfoundation/hardhat-verify": "^2.0.11",
     "@nomicfoundation/hardhat-viem": "^2.0.5",
+    "@openzeppelin/contracts": "^5.0.2",
     "dotenv": "^16.4.5"
   }
 }
