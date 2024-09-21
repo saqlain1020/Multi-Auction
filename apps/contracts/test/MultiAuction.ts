@@ -1,7 +1,7 @@
-import { loadFixture } from "@nomicfoundation/hardhat-toolbox-viem/network-helpers";
+import { loadFixture, time } from "@nomicfoundation/hardhat-toolbox-viem/network-helpers";
 import { expect } from "chai";
 import hre from "hardhat";
-import { getAddress } from "viem";
+import { getAddress, parseEther } from "viem";
 
 describe("MultiAuction", function () {
   // We define a fixture to reuse the same setup in every test.
@@ -36,18 +36,60 @@ describe("MultiAuction", function () {
     });
   });
 
-  describe("Auctions", function () {
-    it("Read Auction", async function () {
+  describe("English Auction", function () {
+    it("Create English Auction", async function () {
       const { MultiAuction, owner } = await loadFixture(deployMultiAuction);
-      // const auc = await MultiAuction.read.sealedAuctions([0n]);
-      // console.log("auc =>", auc);
-      // const bidders = await MultiAuction.read.readSealedAuctionBid([0n]);
-      // console.log("bidders =>", bidders);
+      const twoDaysAfter = BigInt(((new Date().getTime() + 1000 * 60 * 60 * 2) / 1000).toFixed());
+      await MultiAuction.write.createEnglishAuction([twoDaysAfter, parseEther("0.01")]);
+      expect(await MultiAuction.read.totalAuctions()).to.equal(1n);
+      const [
+        auctionType,
+        beneficiary,
+        endTime,
+        winner,
+        startPrice,
+        highestBid,
+        highestBidder,
+        startTime,
+        priceDecrementPerHour,
+        floorPrice,
+      ] = await MultiAuction.read.auctions([0n]);
+      expect(auctionType).to.equal(0);
+      expect(beneficiary).to.equal(getAddress(owner.account.address));
+      expect(endTime).to.equal(twoDaysAfter);
+      expect(winner).to.equal("0x0000000000000000000000000000000000000000");
+      expect(startPrice).to.equal(parseEther("0.01"));
+      expect(highestBid).to.equal(0n);
+      expect(highestBidder).to.equal("0x0000000000000000000000000000000000000000");
     });
+
+    it("Place Bid English", async function () {
+      const { MultiAuction, owner } = await loadFixture(deployMultiAuction);
+      const twoDaysAfter = BigInt(((new Date().getTime() + 1000 * 60 * 60 * 2) / 1000).toFixed());
+      await MultiAuction.write.createEnglishAuction([twoDaysAfter, parseEther("0.01")]);
+      await MultiAuction.write.placeBid([0n], { value: parseEther("0.02") });
+      const auction = await MultiAuction.read.auctions([0n]);
+      expect(auction[5]).to.equal(parseEther("0.02"));
+      expect(auction[6]).to.equal(getAddress(owner.account.address));
+    });
+
+    it("No bid after end time", async function () {
+      const { MultiAuction, owner } = await loadFixture(deployMultiAuction);
+      const twoDaysAfter = BigInt(((new Date().getTime() + 1000 * 60 * 60 * 2) / 1000).toFixed());
+      await MultiAuction.write.createEnglishAuction([twoDaysAfter, parseEther("0.01")]);
+
+      await time.increaseTo(twoDaysAfter - 10n);
+      await MultiAuction.write.placeBid([0n], { value: parseEther("0.02") });
+      await time.increaseTo(twoDaysAfter);
+
+      await expect(MultiAuction.write.placeBid([0n], { value: parseEther("0.02") })).to.be.rejectedWith(
+        "MultiAuction: Auction has already ended."
+      );
+    });
+
+    it("Increase auction time at close to end bid",async function(){
+      
+    })
   });
 });
-
-
-
-
 
