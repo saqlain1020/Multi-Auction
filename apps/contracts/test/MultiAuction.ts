@@ -32,9 +32,22 @@ describe("MultiAuction", function () {
 
     it("Should set the right owner", async function () {
       const { MultiAuction, owner } = await loadFixture(deployMultiAuction);
-
       expect(await MultiAuction.read.owner()).to.equal(getAddress(owner.account.address));
     });
   });
+
+  describe("Auctions", function () {
+    it("Read Auction", async function () {
+      const { MultiAuction, owner } = await loadFixture(deployMultiAuction);
+      // const auc = await MultiAuction.read.sealedAuctions([0n]);
+      // console.log("auc =>", auc);
+      // const bidders = await MultiAuction.read.readSealedAuctionBid([0n]);
+      // console.log("bidders =>", bidders);
+    });
+  });
 });
+
+
+
+
 
