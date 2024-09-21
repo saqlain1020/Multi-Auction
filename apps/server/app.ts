@@ -13,10 +13,10 @@ const limiter = rateLimit({
 
 const app = express();
 
-//implementing cors
+// implementing cors
 app.use(cors({ origin: true, credentials: true }));
 
-//middlewares
+// middlewares
 app.use(limiter);
 
 app.use(express.json());

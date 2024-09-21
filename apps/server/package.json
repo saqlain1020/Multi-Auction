@@ -1,7 +1,9 @@
 {
   "name": "server",
   "packageManager": "yarn@4.5.0",
+  "main": "dist/server.js",
   "scripts": {
+    "start": "node ./dist/server.js",
     "dev": "nodemon ./server.ts",
     "build": "tsc"
   },
