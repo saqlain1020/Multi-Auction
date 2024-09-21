@@ -10,7 +10,7 @@ describe("MultiAuction", function () {
   async function deployMultiAuction() {
     // Contracts are deployed using the first signer/account by default
     const [owner, otherAccount] = await hre.viem.getWalletClients();
-
+    console.log("owner.account.address =>", owner.account.address);
     const bidExtensionTime = BigInt(120); // 2 minutes
     const MultiAuction = await hre.viem.deployContract("MultiAuction", [bidExtensionTime]);
 
@@ -39,16 +39,16 @@ describe("MultiAuction", function () {
   describe("English Auction", function () {
     it("Create English Auction", async function () {
       const { MultiAuction, owner } = await loadFixture(deployMultiAuction);
-      const twoDaysAfter = BigInt(((new Date().getTime() + 1000 * 60 * 60 * 2) / 1000).toFixed());
-      await MultiAuction.write.createEnglishAuction([twoDaysAfter, parseEther("0.01")]);
+      const durationInDays = 2;
+      await MultiAuction.write.createEnglishAuction([durationInDays, parseEther("0.01")]);
       expect(await MultiAuction.read.totalAuctions()).to.equal(1n);
       const [
         auctionType,
         beneficiary,
         endTime,
         winner,
-        startPrice,
         highestBid,
+        startPrice,
         highestBidder,
         startTime,
         priceDecrementPerHour,
@@ -56,7 +56,6 @@ describe("MultiAuction", function () {
       ] = await MultiAuction.read.auctions([0n]);
       expect(auctionType).to.equal(0);
       expect(beneficiary).to.equal(getAddress(owner.account.address));
-      expect(endTime).to.equal(twoDaysAfter);
       expect(winner).to.equal("0x0000000000000000000000000000000000000000");
       expect(startPrice).to.equal(parseEther("0.01"));
       expect(highestBid).to.equal(0n);
@@ -65,31 +64,32 @@ describe("MultiAuction", function () {
 
     it("Place Bid English", async function () {
       const { MultiAuction, owner } = await loadFixture(deployMultiAuction);
-      const twoDaysAfter = BigInt(((new Date().getTime() + 1000 * 60 * 60 * 2) / 1000).toFixed());
-      await MultiAuction.write.createEnglishAuction([twoDaysAfter, parseEther("0.01")]);
+      const durationInDays = 2;
+      await MultiAuction.write.createEnglishAuction([durationInDays, parseEther("0.01")]);
       await MultiAuction.write.placeBid([0n], { value: parseEther("0.02") });
       const auction = await MultiAuction.read.auctions([0n]);
-      expect(auction[5]).to.equal(parseEther("0.02"));
+      expect(auction[4]).to.equal(parseEther("0.02"));
       expect(auction[6]).to.equal(getAddress(owner.account.address));
     });
 
     it("No bid after end time", async function () {
-      const { MultiAuction, owner } = await loadFixture(deployMultiAuction);
-      const twoDaysAfter = BigInt(((new Date().getTime() + 1000 * 60 * 60 * 2) / 1000).toFixed());
-      await MultiAuction.write.createEnglishAuction([twoDaysAfter, parseEther("0.01")]);
-
-      await time.increaseTo(twoDaysAfter - 10n);
+      const { MultiAuction, owner, publicClient } = await loadFixture(deployMultiAuction);
+      const durationInDays = 2;
+      await MultiAuction.write.createEnglishAuction([durationInDays, parseEther("0.01")]);
+      // let bal = await publicClient.getBalance({ address: owner.account.address });
+      const [, , endTime] = await MultiAuction.read.auctions([0n]);
+      await time.increase(24 * 60 * 60);
       await MultiAuction.write.placeBid([0n], { value: parseEther("0.02") });
-      await time.increaseTo(twoDaysAfter);
+      // expect(await publicClient.getBalance({ address: owner.account.address })).to.equal(bal - parseEther("0.02"));
+      await time.increase(24 * 60 * 60);
 
-      await expect(MultiAuction.write.placeBid([0n], { value: parseEther("0.02") })).to.be.rejectedWith(
-        "MultiAuction: Auction has already ended."
-      );
+      await expect(MultiAuction.write.placeBid([0n], { value: parseEther("0.03") })).to.be.rejectedWith("AuctionEnded");
+
+      expect((await MultiAuction.read.auctions([0n]))[4]).to.be.equals(parseEther("0.02"));
     });
-
-    it("Increase auction time at close to end bid",async function(){
-      
-    })
   });
 });
+
+
+
 

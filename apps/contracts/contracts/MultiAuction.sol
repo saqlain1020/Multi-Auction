@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+// import "hardhat/console.sol";
 
 error NotAuctionCreator();
 error AuctionNotEnded();
@@ -11,11 +12,6 @@ error AuctionEnded();
 error TransferFailed(address _address, uint _value);
 error InvalidAuctionType();
 
-// TODO: sealed bids claim system
-// TODO: reentrat guard
-// TODO: end time in days
-// TODO: error definitions
-// TODO: variable packing
 contract MultiAuction is Ownable, ReentrancyGuard {
     struct SealedBids {
         address bidder;
@@ -34,9 +30,9 @@ contract MultiAuction is Ownable, ReentrancyGuard {
         address beneficiary;
         uint endTime;
         address winner;
+        uint highestBid;
         // English Auction
         uint startPrice;
-        uint highestBid;
         address highestBidder;
         // Dutch Auction
         // uint startPrice; // Start price also included
@@ -44,11 +40,12 @@ contract MultiAuction is Ownable, ReentrancyGuard {
         uint priceDecrementPerHour; // Price Decrement in Eth
         uint floorPrice; // Price after which no decrement will be made
         // Sealed Bid Auction
-        address[] bidders;
         mapping(address => uint) bids;
+        mapping(address => bool) withdrawnSealedBids;
     }
 
     mapping(uint256 => Auction) public auctions;
+    mapping(uint256 => address) private sealedAuctionHighestBidders;
 
     /**
      * @notice Time in seconds to increase an English auction deadline if bid is placed at the end.
@@ -78,14 +75,14 @@ contract MultiAuction is Ownable, ReentrancyGuard {
     );
     event SealedAuctionCreated(address indexed beneficiary, uint endTime);
 
-    function createEnglishAuction(uint _endTime, uint _startPrice) external {
+    function createEnglishAuction(
+        uint32 _endTimeInDays,
+        uint _startPrice
+    ) external {
         Auction storage auction = auctions[totalAuctions];
         auction.beneficiary = _msgSender();
         auction.auctionType = AuctionType.English;
-        require(
-            _endTime > block.timestamp,
-            "MultiAuction: Auction cannot end in the past."
-        );
+        uint _endTime = block.timestamp + (_endTimeInDays * 24 * 60 * 60);
         auction.endTime = _endTime;
         require(_startPrice > 0, "MultiAuction: Start price cannot be zero.");
         auction.startPrice = _startPrice;
@@ -93,7 +90,7 @@ contract MultiAuction is Ownable, ReentrancyGuard {
     }
 
     function createDutchAuction(
-        uint _endTime,
+        uint32 _endTimeInDays,
         uint _startPrice,
         uint _priceDecrementPerHour,
         uint _floorPrice
@@ -101,10 +98,7 @@ contract MultiAuction is Ownable, ReentrancyGuard {
         Auction storage auction = auctions[totalAuctions];
         auction.beneficiary = _msgSender();
         auction.auctionType = AuctionType.Dutch;
-        require(
-            _endTime > block.timestamp,
-            "MultiAuction: Auction cannot end in the past."
-        );
+        uint _endTime = block.timestamp + (_endTimeInDays * 24 * 60 * 60);
         auction.endTime = _endTime;
         require(_startPrice > 0, "MultiAuction: Start price cannot be zero.");
         auction.startPrice = _startPrice;
@@ -122,14 +116,11 @@ contract MultiAuction is Ownable, ReentrancyGuard {
         totalAuctions++;
     }
 
-    function createSealedAuction(uint _endTime) external {
+    function createSealedAuction(uint32 _endTimeInDays) external {
         Auction storage auction = auctions[totalAuctions];
+        uint _endTime = block.timestamp + (_endTimeInDays * 24 * 60 * 60);
         auction.beneficiary = _msgSender();
         auction.auctionType = AuctionType.Sealed;
-        require(
-            _endTime > block.timestamp,
-            "MultiAuction: Auction cannot end in the past."
-        );
         auction.endTime = _endTime;
         totalAuctions++;
     }
@@ -164,7 +155,7 @@ contract MultiAuction is Ownable, ReentrancyGuard {
 
         // Extend auction end time if bid is placed at the end, for fairness
         if (
-            auction.endTime - englishAuctionBidExtensionTime >= block.timestamp
+            block.timestamp >= auction.endTime - englishAuctionBidExtensionTime
         ) {
             auction.endTime += englishAuctionBidExtensionTime;
         }
@@ -192,7 +183,8 @@ contract MultiAuction is Ownable, ReentrancyGuard {
 
         (bool sent, ) = auction.beneficiary.call{value: newBid}("");
         if (!sent) revert TransferFailed(auction.beneficiary, newBid);
-
+        auction.highestBid = newBid;
+        auction.highestBidder = _msgSender();
         auction.winner = _msgSender();
     }
 
@@ -201,11 +193,16 @@ contract MultiAuction is Ownable, ReentrancyGuard {
     ) internal onlyActiveAuction(_auctionId) {
         Auction storage auction = auctions[_auctionId];
         uint newBid = msg.value;
+
         if (auction.bids[_msgSender()] > 0) {
             auction.bids[_msgSender()] += newBid;
+            newBid = auction.bids[_msgSender()];
         } else {
             auction.bids[_msgSender()] = newBid;
-            auction.bidders.push(_msgSender());
+        }
+
+        if (auction.bids[sealedAuctionHighestBidders[_auctionId]] < newBid) {
+            sealedAuctionHighestBidders[_auctionId] = _msgSender();
         }
     }
 
@@ -250,11 +247,11 @@ contract MultiAuction is Ownable, ReentrancyGuard {
             "MultiAuction: No bids placed."
         );
 
+        auction.winner = auction.highestBidder;
+
         (bool sent, ) = auction.beneficiary.call{value: auction.highestBid}("");
         if (!sent)
             revert TransferFailed(auction.beneficiary, auction.highestBid);
-
-        auction.winner = auction.highestBidder;
     }
 
     function withdrawSealedAuction(uint _auctionId) internal {
@@ -266,93 +263,74 @@ contract MultiAuction is Ownable, ReentrancyGuard {
         );
 
         require(
-            auction.bidders.length > 0,
+            auction.highestBidder != address(0),
             "MultiAuction: Auction didn't received bids."
         );
-
-        address highestBidder;
-        for (uint i = 0; i < auction.bidders.length; i++) {
-            address _bidderAddress = auction.bidders[i];
-            uint _bid = auction.bids[_bidderAddress];
-            uint prevHighestBid = auction.bids[highestBidder];
-            if (_bid > prevHighestBid) {
-                if (highestBidder != address(0)) {
-                    // Refund previous higest bidder
-                    (bool bidRefunded, ) = highestBidder.call{
-                        value: prevHighestBid
-                    }("");
-                    if (!bidRefunded)
-                        revert TransferFailed(highestBidder, prevHighestBid);
-                }
-                highestBidder = _bidderAddress;
-            } else {
-                // Refund lower bidders
-                (bool lowerRefunded, ) = _bidderAddress.call{value: _bid}("");
-                if (!lowerRefunded) revert TransferFailed(_bidderAddress, _bid);
-            }
-        }
-        (bool sent, ) = auction.beneficiary.call{
-            value: auction.bids[highestBidder]
-        }("");
-        if (!sent)
-            revert TransferFailed(
-                auction.beneficiary,
-                auction.bids[highestBidder]
-            );
+        address highestBidder = sealedAuctionHighestBidders[_auctionId];
+        uint _highestBid = auction.bids[highestBidder];
         auction.winner = highestBidder;
+        (bool sent, ) = auction.beneficiary.call{value: _highestBid}("");
+        if (!sent) revert TransferFailed(auction.beneficiary, _highestBid);
     }
 
-    function revealSealedBids(
+    function withdrawSealedBid(
+        uint _auctionId
+    ) external nonReentrant onlyInactiveAuction(_auctionId) {
+        Auction storage auction = auctions[_auctionId];
+        require(
+            sealedAuctionHighestBidders[_auctionId] != _msgSender(),
+            "MultiAuction: Winner cannot withdraw."
+        );
+        require(
+            !auction.withdrawnSealedBids[_msgSender()],
+            "MultiAuction: Already Withdrawn."
+        );
+        auction.withdrawnSealedBids[_msgSender()] = true;
+        (bool sent, ) = _msgSender().call{value: auction.bids[_msgSender()]}(
+            ""
+        );
+        if (!sent)
+            revert TransferFailed(_msgSender(), auction.bids[_msgSender()]);
+    }
+
+    function sealedBidOf(
+        address _address,
         uint _auctionId
     )
         public
         view
         onlyInactiveAuction(_auctionId)
-        returns (SealedBids[] memory)
+        returns (uint bid, bool isAvailableToWithdraw)
     {
         Auction storage auction = auctions[_auctionId];
         require(
             auction.auctionType == AuctionType.Sealed,
             "MultiAuction: Auction not of sealed type"
         );
-
-        // Create a memory array with a fixed size (same as the number of bidders)
-        SealedBids[] memory sealedBids = new SealedBids[](
-            auction.bidders.length
-        );
-
-        for (uint i = 0; i < auction.bidders.length; i++) {
-            address _bidderAddress = auction.bidders[i];
-            uint _bid = auction.bids[_bidderAddress];
-            sealedBids[i] = SealedBids(_bidderAddress, _bid);
-        }
-        return sealedBids;
+        bid = auction.bids[_address];
+        isAvailableToWithdraw = auction.withdrawnSealedBids[_address];
     }
 
-    function cancelAuction(
+    function winnerOf(
         uint _auctionId
-    ) external nonReentrant onlyAuctionCreator(_auctionId) {
+    )
+        public
+        view
+        onlyInactiveAuction(_auctionId)
+        returns (address _winner, uint _bid, AuctionType _auctionType)
+    {
         Auction storage auction = auctions[_auctionId];
-        if (auction.auctionType == AuctionType.English) {
-            if (auction.highestBidder != address(0)) {
-                (bool sent, ) = auction.highestBidder.call{
-                    value: auction.highestBid
-                }("");
-                if (!sent)
-                    revert TransferFailed(
-                        auction.highestBidder,
-                        auction.highestBid
-                    );
-            }
-        } else if (auction.auctionType == AuctionType.Sealed) {
-            for (uint i = 0; i < auction.bidders.length; i++) {
-                address _bidder = auction.bidders[i];
-                (bool sent, ) = _bidder.call{value: auction.bids[_bidder]}("");
-                if (!sent)
-                    revert TransferFailed(_bidder, auction.bids[_bidder]);
-            }
+        _auctionType = auction.auctionType;
+        if (_auctionType == AuctionType.English) {
+            _winner = auction.highestBidder;
+            _bid = auction.highestBid;
+        } else if (_auctionType == AuctionType.Dutch) {
+            _winner = auction.highestBidder;
+            _bid = auction.highestBid;
+        } else if (_auctionType == AuctionType.Sealed) {
+            _winner = sealedAuctionHighestBidders[_auctionId];
+            _bid = auction.bids[_winner];
         }
-        auction.endTime = block.timestamp;
     }
 
     /** @notice Modifier for withdrawing only for ended auctions */
@@ -370,8 +348,9 @@ contract MultiAuction is Ownable, ReentrancyGuard {
 
     /** @notice Modifier for placing bids only for active auctions */
     modifier onlyActiveAuction(uint _auctionId) {
-        if (block.timestamp >= auctions[_auctionId].endTime)
+        if (block.timestamp >= auctions[_auctionId].endTime) {
             revert AuctionEnded();
+        }
         _;
     }
 }

@@ -24,8 +24,18 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
-      polygonAmoy: "",
+      polygonAmoy: "TTJKDGPV1AY4H52N6HECABFZ8WDUGXD5G2",
     },
+    customChains: [
+      {
+        network: "polygonAmoy",
+        chainId: 80002,
+        urls: {
+          apiURL: "https://api-amoy.polygonscan.com/api",
+          browserURL: "https://amoy.polygonscan.com",
+        },
+      },
+    ],
   },
   sourcify: {
     enabled: false,
@@ -36,7 +46,7 @@ const config: HardhatUserConfig = {
         mnemonic,
       },
     },
-    polygonMumbai: {
+    polygonAmoy: {
       url: "https://rpc-amoy.polygon.technology",
       accounts,
     },
@@ -44,4 +54,5 @@ const config: HardhatUserConfig = {
 };
 
 export default config;
+
 
