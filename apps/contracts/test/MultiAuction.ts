@@ -12,7 +12,7 @@ describe("MultiAuction", function () {
     const [owner, otherAccount] = await hre.viem.getWalletClients();
     console.log("owner.account.address =>", owner.account.address);
     const bidExtensionTime = BigInt(120); // 2 minutes
-    const MultiAuction = await hre.viem.deployContract("MultiAuction", [bidExtensionTime]);
+    const MultiAuction = await hre.viem.deployContract("MultiAuctionV2", [bidExtensionTime]);
 
     const publicClient = await hre.viem.getPublicClient();
 
@@ -89,6 +89,7 @@ describe("MultiAuction", function () {
     });
   });
 });
+
 
 
 
