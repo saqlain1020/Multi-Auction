@@ -11,6 +11,7 @@ import MyAuctions from "./pages/MyAuctions/MyAuctions";
 import Test from "./pages/Test/Test";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import AuctionDetails from "./pages/AuctionDetails/AuctionDetails";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
             <Route path="create" element={<CreateAuction />} />
             <Route path="manage" element={<MyAuctions />} />
             <Route path="test" element={<Test />} />
+            <Route path="auction/:auctionId" element={<AuctionDetails />} />
           </Route>
         </Routes>
       </BrowserRouter>
@@ -32,5 +34,7 @@ function App() {
 }
 
 export default App;
+
+
 
 

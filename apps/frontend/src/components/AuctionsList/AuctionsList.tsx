@@ -1,8 +1,9 @@
-import { Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
+import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
 import useGetAuctions from "../../hooks/useGetAuctions";
 import { AuctionType } from "../../types";
 import moment from "moment";
 import { LoadingButton } from "@mui/lab";
+import { Link } from "react-router-dom";
 
 const AuctionsList = () => {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = useGetAuctions();
@@ -15,10 +16,11 @@ const AuctionsList = () => {
             <TableRow>
               <TableCell>ID</TableCell>
               <TableCell align="right">Type</TableCell>
-              <TableCell align="right">Start</TableCell>
-              <TableCell align="right">End</TableCell>
-              <TableCell align="right">Owner</TableCell>
-              <TableCell align="right">Status</TableCell>
+              <TableCell align="left">Start</TableCell>
+              <TableCell align="left">End</TableCell>
+              <TableCell align="left">Owner</TableCell>
+              <TableCell align="center">Status</TableCell>
+              <TableCell align="center"></TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -30,10 +32,16 @@ const AuctionsList = () => {
                 <TableCell align="right">
                   {Object.entries(AuctionType).find(([_, value]) => value === Number(row.auctionType))?.[0]}
                 </TableCell>
-                <TableCell align="right">{moment(row.startTime).fromNow()}</TableCell>
-                <TableCell align="right">{moment(row.endTime).fromNow()}</TableCell>
-                <TableCell align="right">{row.owner}</TableCell>
-                <TableCell align="right">{row.ended ? "Ended" : "Active"}</TableCell>
+                <TableCell align="left">{moment(row.startTime).fromNow()}</TableCell>
+                <TableCell align="left">{moment(row.endTime).fromNow()}</TableCell>
+                <TableCell align="left">{row.owner}</TableCell>
+                <TableCell align="center">{row.ended ? "Ended" : "Active"}</TableCell>
+                <TableCell align="left">
+                  {/* @ts-expect-error */}
+                  <Button size="small" LinkComponent={Link} to={`/auction/${row.auctionNumber}`}>
+                    Bid
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

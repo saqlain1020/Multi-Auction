@@ -1,6 +1,11 @@
 import backendApi from ".";
 import { ApiAuction, AuctionType } from "../types";
 
+export const getAuction = async (auctionId: number) => {
+  const { data } = await backendApi.get<{ status: boolean; data: ApiAuction }>("/api/auction/" + auctionId);
+  return data.data;
+};
+
 export const createAuctionApi = async (obj: {
   auctionType: AuctionType;
   startPrice: number;

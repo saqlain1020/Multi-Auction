@@ -26,14 +26,15 @@ export const getAuctionDetails: RequestHandler = async (req, res) => {
         abi: MultiAuctionAbi,
         address: MultiAuctionAddress,
         functionName: "auctions",
-        args: [BigInt(auctionId)],
+        args: [BigInt(auctionId) - 1n],
       });
     res.status(200).json({
       data: {
         auctionId,
+        auctionNumber: Number(auctionId),
         owner,
-        startTime: new Date(Number(startTime) * 1000),
-        endTime: new Date(Number(endTime) * 1000),
+        startTime: new Date(Number(startTime) * 1000).toString(),
+        endTime: new Date(Number(endTime) * 1000).toString(),
         highestBid: highestBid.toString(),
         highestBidder,
         ended,
