@@ -44,7 +44,7 @@ export async function startListeners() {
   setInterval(
     () => {
       publicClient.getBlockNumber().then(async (num) => {
-        await Setting.updateOne({}, { lastBlockRead: num });
+        await Setting.updateOne({}, { lastBlockRead: Number(num) });
       });
     },
     1000 * 60 * 5,
@@ -99,8 +99,8 @@ async function onNewBid(logs: WatchContractEventOnLogsParameter<typeof MultiAuct
     {
       auctionNumber: Number(log.args.auctionId),
       bidder: log.args.bidder,
-      bid: log.args.bid,
-      newPrice: log.args.newPrice,
+      bid: log.args.bid?.toString(),
+      newPrice: log.args.newPrice?.toString(),
       timestamp: new Date(Number(timestamp) * 1000).toString(),
     },
     { upsert: true },
@@ -116,6 +116,11 @@ async function onAuctionEnded(logs: WatchContractEventOnLogsParameter<typeof Mul
   // const { timestamp } = await publicClient.getBlock({ blockNumber: log.blockNumber, includeTransactions: false });
   await Auction.findOneAndUpdate(
     { auctionNumber: Number(log.args.auctionId) },
-    { winner: log.args.winner, highestBid: log.args.winningBid, highestBidder: log.args.winner, ended: true },
+    {
+      winner: log.args.winner,
+      highestBid: log.args.winningBid?.toString(),
+      highestBidder: log.args.winner,
+      ended: true,
+    },
   );
 }

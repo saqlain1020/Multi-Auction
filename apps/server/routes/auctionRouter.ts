@@ -1,8 +1,10 @@
 import { Router } from "express";
-import { getAuctionDetails } from "../controllers/auctionController";
+import { createAuction, getAllAuctions, getAuctionDetails } from "../controllers/auctionController";
 
 const auctionRouter = Router();
 
+auctionRouter.get("/", getAllAuctions);
 auctionRouter.get("/:auctionId", getAuctionDetails);
+auctionRouter.post("/", createAuction);
 
 export default auctionRouter;
