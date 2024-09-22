@@ -24,7 +24,7 @@ services:
     build: ./apps/frontend # Path to your Express backend Dockerfile
     container_name: frontend
     ports:
-      - "3000:3000"    
+      - "3000:3000"
     depends_on:
       - server
 volumes:

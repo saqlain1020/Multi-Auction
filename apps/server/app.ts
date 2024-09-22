@@ -26,7 +26,7 @@ app.use(mongoSanitize());
 app.use(helmet());
 app.use(morgan(":method :url :status :response-time ms - :date[web]"));
 
-//routers
+// routers
 app.use("/ping", (req, res) => {
   res.status(200).json({ status: true });
 });
