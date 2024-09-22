@@ -1,4 +1,4 @@
-version: "3"
+version: "3.8"
 services:
   mongodb:
     image: mongo
@@ -9,5 +9,23 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: password
+  server:
+    build: ./apps/server # Path to your Express backend Dockerfile
+    container_name: backend
+    ports:
+      - "8000:8000"
+    environment:
+      MONGO_STRING: mongodb://root:password@mongodb:27017/multiauction?authSource=admin
+      MNEMONIC: "blanket whip diamond easy sound memory aisle host fancy version source rice"
+      PORT: "8000"
+    depends_on:
+      - mongodb
+  frontend:
+    build: ./apps/frontend # Path to your Express backend Dockerfile
+    container_name: frontend
+    ports:
+      - "3000:3000"    
+    depends_on:
+      - server
 volumes:
   auction_mongo:
