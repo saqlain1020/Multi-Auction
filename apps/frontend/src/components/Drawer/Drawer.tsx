@@ -20,15 +20,8 @@ import { Link } from "react-router-dom";
 
 const drawerWidth = 240;
 
-interface Props {
-  /**
-   * Injected by the documentation to work in an iframe.
-   * Remove this when copying and pasting into your project.
-   */
-  window?: () => Window;
-}
 
-export default function ResponsiveDrawer(props: Props) {
+export default function ResponsiveDrawer() {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [isClosing, setIsClosing] = React.useState(false);
 

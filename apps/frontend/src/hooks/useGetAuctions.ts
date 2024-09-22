@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { getAllAuctions } from "../api/auction";
 import { ApiAuction } from "../types";
 
@@ -8,7 +8,7 @@ const useGetAuctions = () => {
     queryKey: ["get", "auctions"],
     queryFn: ({ pageParam }) => getAllAuctions({ page: pageParam, limit }),
     initialPageParam: 1,
-    getNextPageParam: (lastPage, allPages, lastPageParam, allPageParams) => {
+    getNextPageParam: (lastPage, _, lastPageParam) => {
       return lastPage.data.length >= limit ? lastPageParam + 1 : undefined;
     },
     // getPreviousPageParam: (firstPage, allPages, firstPageParam, allPageParams) => firstPage.prevCursor,
