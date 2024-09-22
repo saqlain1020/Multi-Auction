@@ -12,6 +12,12 @@ error AuctionEndedError();
 error TransferFailed(address _address, uint _value);
 error InvalidAuctionType();
 
+/**
+ * @title MultiAuctionV2
+ * @dev A smart contract that implements multiple auction types: English, Dutch, and Sealed auctions.
+ *      It supports bid placements, auction creation, bid withdrawals for Sealed auctions,
+ *      and various auction-related functionalities.
+ */
 contract MultiAuctionV2 is Ownable, ReentrancyGuard {
   struct SealedBids {
     address bidder;
@@ -40,8 +46,8 @@ contract MultiAuctionV2 is Ownable, ReentrancyGuard {
     uint priceDecrementPerHour; // Price Decrement in Eth
     uint floorPrice; // Price after which no decrement will be made
     // Sealed Bid Auction
-    mapping(address => uint) bids;
-    mapping(address => bool) withdrawnSealedBids;
+    mapping(address => uint) bids; // Mapping of bidders and their bids
+    mapping(address => bool) withdrawnSealedBids; // Track if a sealed bid has been withdrawn
   }
 
   mapping(uint256 => Auction) public auctions;
@@ -51,15 +57,21 @@ contract MultiAuctionV2 is Ownable, ReentrancyGuard {
    * @notice Time in seconds to increase an English auction deadline if bid is placed at the end.
    */
   uint public englishAuctionBidExtensionTime;
+
   /**
    * @notice Total number of auctions ever created
    */
   uint public totalAuctions;
 
+  /**
+   * @dev Constructor for the MultiAuctionV2 contract.
+   * @param _englishAuctionBidExtensionTime Time extension in seconds for English auctions if a bid is placed near the end.
+   */
   constructor(uint _englishAuctionBidExtensionTime) Ownable(_msgSender()) {
     englishAuctionBidExtensionTime = _englishAuctionBidExtensionTime;
   }
 
+  // Events for logging auction activities
   event EnglishAuctionCreated(uint auctionId, address indexed beneficiary, uint endTime, uint startPrice);
   event DutchAuctionCreated(
     uint auctionId,
@@ -77,6 +89,11 @@ contract MultiAuctionV2 is Ownable, ReentrancyGuard {
   event AuctionEnded(uint auctionId, address winner, uint winningBid);
   event SealedBidWithdrawn(uint auctionId, address indexed bidder, uint bid);
 
+  /**
+   * @notice Create an English auction.
+   * @param _endTimeInDays Duration of the auction in days.
+   * @param _startPrice Starting price for the auction.
+   */
   function createEnglishAuction(uint32 _endTimeInDays, uint _startPrice) external {
     Auction storage auction = auctions[totalAuctions];
     auction.beneficiary = _msgSender();
@@ -89,6 +106,13 @@ contract MultiAuctionV2 is Ownable, ReentrancyGuard {
     emit EnglishAuctionCreated(totalAuctions - 1, _msgSender(), _endTime, _startPrice);
   }
 
+  /**
+   * @notice Create a Dutch auction.
+   * @param _endTimeInDays Duration of the auction in days.
+   * @param _startPrice Starting price for the auction.
+   * @param _priceDecrementPerHour Price decrement in ETH per hour.
+   * @param _floorPrice Minimum price at which the auction stops decreasing.
+   */
   function createDutchAuction(
     uint32 _endTimeInDays,
     uint _startPrice,
@@ -119,6 +143,10 @@ contract MultiAuctionV2 is Ownable, ReentrancyGuard {
     );
   }
 
+  /**
+   * @notice Create a sealed-bid auction.
+   * @param _endTimeInDays Duration of the auction in days.
+   */
   function createSealedAuction(uint32 _endTimeInDays) external {
     Auction storage auction = auctions[totalAuctions];
     uint _endTime = block.timestamp + (_endTimeInDays * 24 * 60 * 60);
@@ -154,6 +182,7 @@ contract MultiAuctionV2 is Ownable, ReentrancyGuard {
 
   function bidOnDutchAuction(uint _auctionId) internal onlyActiveAuction(_auctionId) {
     Auction storage auction = auctions[_auctionId];
+    // Cannot bid on an ended auction
     require(auction.winner == address(0), "MultiAuction: Auction winner decided.");
     uint newBid = msg.value;
     uint256 currentPrice = auction.startPrice -
@@ -176,6 +205,7 @@ contract MultiAuctionV2 is Ownable, ReentrancyGuard {
     Auction storage auction = auctions[_auctionId];
     uint newBid = msg.value;
 
+    // If bidder has already bid, increase bid by previous bid
     if (auction.bids[_msgSender()] > 0) {
       auction.bids[_msgSender()] += newBid;
       newBid = auction.bids[_msgSender()];
@@ -183,6 +213,7 @@ contract MultiAuctionV2 is Ownable, ReentrancyGuard {
       auction.bids[_msgSender()] = newBid;
     }
 
+    // Update highest bidder if new bid is higher
     if (auction.bids[sealedAuctionHighestBidders[_auctionId]] < newBid) {
       sealedAuctionHighestBidders[_auctionId] = _msgSender();
     }
