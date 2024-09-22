@@ -17,13 +17,14 @@ import AddIcon from "@mui/icons-material/Add";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import { Link } from "react-router-dom";
+import useBalance from "../../hooks/useBalance";
 
 const drawerWidth = 240;
-
 
 export default function ResponsiveDrawer() {
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [isClosing, setIsClosing] = React.useState(false);
+  const { data } = useBalance();
 
   const handleDrawerClose = () => {
     setIsClosing(true);
@@ -63,15 +64,14 @@ export default function ResponsiveDrawer() {
             <ListItemText primary={"Create Auction"} />
           </ListItemButton>
         </ListItem>
-        <ListItem disablePadding>
-          {/* @ts-expect-error */}
+        {/* <ListItem disablePadding>
           <ListItemButton LinkComponent={Link} to="/manage">
             <ListItemIcon>
               <DashboardIcon />
             </ListItemIcon>
             <ListItemText primary={"My Auctions"} />
           </ListItemButton>
-        </ListItem>
+        </ListItem> */}
       </List>
       <Divider />
     </div>
@@ -99,7 +99,7 @@ export default function ResponsiveDrawer() {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div">
-            Responsive drawer
+            Responsive drawer (Balance: {Number(data || 0).toLocaleString()} ETH)
           </Typography>
         </Toolbar>
       </AppBar>

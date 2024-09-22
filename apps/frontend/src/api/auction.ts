@@ -24,3 +24,20 @@ export const getAllAuctions = async (params: { page: number; limit: number }) =>
   });
   return data;
 };
+
+export const placeBidApi = async (params: { auctionId: number; amount: number }) => {
+  const { amount, auctionId } = params;
+  const { data } = await backendApi.post("/api/auction/bid/" + auctionId, { amount });
+  return data;
+};
+
+export const endAuctionApi = async (params: { auctionId: number }) => {
+  const { auctionId } = params;
+  const { data } = await backendApi.post("/api/auction/end-auction", { auctionId });
+  return data;
+};
+
+export const getBalanceApi = async () => {
+  const { data } = await backendApi.get("/api/auction/balance");
+  return data.data as string;
+};

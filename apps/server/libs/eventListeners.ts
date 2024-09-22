@@ -3,7 +3,7 @@ import { AuctionContractCreationBlock, MultiAuctionAddress } from "../constants"
 import { publicClient } from "./ethereum";
 import Auction from "../models/Auction";
 import Setting from "../models/Setting";
-import { WatchContractEventOnLogsFn, WatchContractEventOnLogsParameter } from "viem";
+import { WatchContractEventOnLogsParameter } from "viem";
 import Bid from "../models/Bid";
 
 export async function startListeners() {

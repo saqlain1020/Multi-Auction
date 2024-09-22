@@ -20,7 +20,7 @@ const AuctionsList = () => {
               <TableCell align="left">End</TableCell>
               <TableCell align="left">Owner</TableCell>
               <TableCell align="center">Status</TableCell>
-              <TableCell align="center"></TableCell>
+              <TableCell align="center">Details/Bid</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -38,8 +38,8 @@ const AuctionsList = () => {
                 <TableCell align="center">{row.ended ? "Ended" : "Active"}</TableCell>
                 <TableCell align="left">
                   {/* @ts-expect-error */}
-                  <Button size="small" LinkComponent={Link} to={`/auction/${row.auctionNumber}`}>
-                    Bid
+                  <Button size="small" variant="contained" LinkComponent={Link} to={`/auction/${row.auctionNumber}`}>
+                    Click Me
                   </Button>
                 </TableCell>
               </TableRow>

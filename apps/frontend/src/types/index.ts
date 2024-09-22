@@ -13,6 +13,11 @@ export interface ApiAuction {
   id: string;
   owner: string;
   startTime: string;
+  startPrice: string;
+  currentPrice?: string;
+  highestBidder?: string;
+  priceDecrement?: string;
+  highestBid?: string;
   updatedAt: string;
   _id: string;
 }
