@@ -7,6 +7,7 @@ import { formatEther, zeroAddress } from "viem";
 import { LoadingButton } from "@mui/lab";
 import { useState } from "react";
 import { truncateAddress } from "../../utils/common";
+import BidsTable from "../../components/BidsTable/BidsTable";
 
 const AuctionDetails = () => {
   const [amount, setAmount] = useState("0.00001");
@@ -167,6 +168,7 @@ const AuctionDetails = () => {
           </span>
         </Tooltip>
       </Paper>
+      {auction.bids && <BidsTable bids={auction.bids} />}
     </Box>
   );
 };

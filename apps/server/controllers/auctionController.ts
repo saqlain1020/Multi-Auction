@@ -5,6 +5,7 @@ import { MultiAuctionAddress } from "../constants";
 import { formatEther, parseEther } from "viem";
 import APIFeatures from "../libs/apiFeatures";
 import Auction from "../models/Auction";
+import Bid from "../models/Bid";
 
 export const getAllAuctions: RequestHandler = async (req, res) => {
   try {
@@ -34,6 +35,7 @@ export const getAuctionDetails: RequestHandler = async (req, res) => {
       functionName: "getCurrentPrice",
       args: [BigInt(auctionId) - 1n],
     });
+    const bids = await Bid.find({ auctionNumber: Number(auctionId) }).lean();
     res.status(200).json({
       data: {
         auctionId,
@@ -48,6 +50,7 @@ export const getAuctionDetails: RequestHandler = async (req, res) => {
         auctionType,
         startPrice: startPrice.toString(),
         priceDecrement: priceDecrement.toString(),
+        bids,
       },
     });
   } catch (error) {

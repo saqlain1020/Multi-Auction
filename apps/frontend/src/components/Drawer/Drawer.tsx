@@ -15,7 +15,6 @@ import Typography from "@mui/material/Typography";
 import { Outlet } from "react-router-dom";
 import AddIcon from "@mui/icons-material/Add";
 import ListAltIcon from "@mui/icons-material/ListAlt";
-import DashboardIcon from "@mui/icons-material/Dashboard";
 import { Link } from "react-router-dom";
 import useBalance from "../../hooks/useBalance";
 
@@ -131,7 +130,10 @@ export default function ResponsiveDrawer() {
           {drawer}
         </Drawer>
       </Box>
-      <Box component="main" sx={{ flexGrow: 1, p: 3, width: { sm: `calc(100% - ${drawerWidth}px)` } }}>
+      <Box
+        component="main"
+        sx={{ flexGrow: 1, p: 3, width: { xs: "100%", sm: `calc(100% - ${drawerWidth}px)` }, overflow: "auto" }}
+      >
         <Toolbar />
         {/* <Box sx={{ background: "yellow" }}> */}
         <Outlet />

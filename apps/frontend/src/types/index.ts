@@ -1,3 +1,5 @@
+import { Address } from "viem";
+
 export enum AuctionType {
   English,
   Dutch,
@@ -20,4 +22,14 @@ export interface ApiAuction {
   highestBid?: string;
   updatedAt: string;
   _id: string;
+  bids?: AuctionBid[];
+}
+
+export interface AuctionBid {
+  auctionNumber: number;
+  bid: string;
+  bidder: Address;
+  newPrice: string;
+  timestamp: string;
+  txHash: Address;
 }

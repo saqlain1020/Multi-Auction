@@ -97,7 +97,7 @@ async function onNewBid(logs: WatchContractEventOnLogsParameter<typeof MultiAuct
   await Bid.findOneAndUpdate(
     { txHash: log.transactionHash },
     {
-      auctionNumber: Number(log.args.auctionId),
+      auctionNumber: Number(log.args.auctionId) + 1,
       bidder: log.args.bidder,
       bid: log.args.bid?.toString(),
       newPrice: log.args.newPrice?.toString(),
@@ -106,7 +106,7 @@ async function onNewBid(logs: WatchContractEventOnLogsParameter<typeof MultiAuct
     { upsert: true },
   );
   await Auction.findOneAndUpdate(
-    { auctionNumber: Number(log.args.auctionId) },
+    { auctionNumber: Number(log.args.auctionId) + 1 },
     { currentPrice: log.args.newPrice?.toString() },
   );
 }
@@ -115,7 +115,7 @@ async function onAuctionEnded(logs: WatchContractEventOnLogsParameter<typeof Mul
   const log = logs[0];
   // const { timestamp } = await publicClient.getBlock({ blockNumber: log.blockNumber, includeTransactions: false });
   await Auction.findOneAndUpdate(
-    { auctionNumber: Number(log.args.auctionId) },
+    { auctionNumber: Number(log.args.auctionId) + 1 },
     {
       winner: log.args.winner,
       highestBid: log.args.winningBid?.toString(),
