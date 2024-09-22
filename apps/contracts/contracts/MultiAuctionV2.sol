@@ -285,7 +285,7 @@ contract MultiAuctionV2 is Ownable, ReentrancyGuard {
     Auction storage auction = auctions[_auctionId];
     require(auction.auctionType == AuctionType.Sealed, "MultiAuction: Auction not of sealed type");
     bid = auction.bids[_address];
-    isAvailableToWithdraw = auction.withdrawnSealedBids[_address];
+    isAvailableToWithdraw = !auction.withdrawnSealedBids[_address];
   }
 
   function winnerOf(
