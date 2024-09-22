@@ -9,10 +9,12 @@ export interface IAuction {
   endTime: Date;
   highestBid: string;
   highestBidder: Address;
+  currentPrice?: string;
   ended: boolean;
   auctionType: string;
   startPrice: string; // Used for Dutch Auction
   priceDecrement: string; // Used for Dutch Auction
+  winner?: Address;
 }
 
 const auctionSchema = new mongoose.Schema<IAuction>(
@@ -27,9 +29,14 @@ const auctionSchema = new mongoose.Schema<IAuction>(
       required: [true, "Please provide an address"],
       index: true,
     },
+    winner: {
+      type: String,
+      index: true,
+    },
     startTime: { type: Date, required: true },
     endTime: { type: Date, required: true },
     highestBid: { type: String },
+    currentPrice: { type: String },
     highestBidder: { type: String },
     ended: { type: Boolean, default: false },
     auctionType: { type: String, enum: Object.values(AuctionType), required: true },

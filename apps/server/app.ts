@@ -4,6 +4,7 @@ import mongoSanitize from "express-mongo-sanitize"; //for noSql query injections
 import helmet from "helmet"; //Protects from various attacks eg xss etc
 import cors from "cors";
 import morgan from "morgan";
+import auctionRouter from "./routes/auctionRouter";
 
 const limiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
@@ -29,6 +30,7 @@ app.use(morgan(":method :url :status :response-time ms - :date[web]"));
 app.use("/ping", (req, res) => {
   res.status(200).json({ status: true });
 });
+app.use("/api/auction", auctionRouter);
 
 app.use("/", (req, res) => {
   res.status(200).send("Welcome.");
