@@ -1,4 +1,5 @@
 
+
 # MultiAuction Project
 
 This project implements a decentralized multi-auction platform where users can create and participate in three types of auctions: English, Dutch, and Sealed auctions. The project is built with a backend (Express), frontend (Vite), and a MongoDB database, and is also powered by a Solidity smart contract.
@@ -17,6 +18,7 @@ Before setting up and running the project, ensure you have the following install
 -   [Docker](https://www.docker.com/products/docker-desktop/) (if using Docker Compose option)
 -   [Yarn](https://yarnpkg.com/)
 -   [Node.js](https://nodejs.org/) (for Yarn option)
+- Wallet with funds on polygon amoy network
 
 ----------
 
@@ -38,6 +40,8 @@ Before setting up and running the project, ensure you have the following install
     -   **MongoDB**: MongoDB will be running inside a container on port `27017`
     - **Compass**: Db can be accessed in compass using `mongodb://root:password@localhost:27017/multiauction?authSource=admin`
 
+	**Optional**: Replace test wallet mnemonic in docker-compose.yml
+
 ----------
 
 ## Option 2: Running with Yarn
@@ -50,7 +54,7 @@ Before setting up and running the project, ensure you have the following install
 2.  **Install dependencies**: Run the following command to install all dependencies in the monorepo (frontend, backend, etc.):
     `yarn install` 
 
-3. Add Required Env variables in server env file
+3. **Env Init** Add Required Env variables in server env file
     
 4.  **Start MongoDB with Docker**: To start the MongoDB database using Docker, run the following command:
     `yarn start:db` 
@@ -80,7 +84,7 @@ The following environment variables should be set in your `.env` files:
     ```
 	MONGO_STRING = mongodb://root:password@localhost:27017/multiauction?authSource=admin
 	PORT = 8000
-	MNEMONIC = 12 or 24 word wallet mnemonic  
+	MNEMONIC = 12 or 24 word wallet mnemonic  on amoy network
     
 -   **Frontend** (`No Env`):
  
@@ -92,4 +96,3 @@ You can also modify the `docker-compose.yml` file or `.env` file as needed for y
 
 -   **Docker Issues**: If you encounter issues with Docker not starting properly, ensure that Docker is running and that ports `3000`, `8000`, and `27017` are not being used by other services.
 -   **Yarn Issues**: If you encounter any issues during `yarn install`, make sure you have the correct version of Yarn and Node.js installed. Use `yarn set stable` command to update yarn
-
