@@ -1,6 +1,20 @@
 
 ## Recommended Changes to the Original MultiAuction Contract
 
+### Major flaws of MultiAuction Contract
+
+- Sealed Bid was emitting event making all the bids easy to see
+- There is no floor price for dutch auction, price can go negative or overflow, necessary conditions not set for price decrement.
+- endTime is taken without any validations, taking number of days is much better
+- Sealed Bids are not returned to bidders after auction ends
+- States are changed after eth transfer, easy for reentrancy attack
+- Reentrancy vulnerabilities in plce bid, withdraw functions
+- Highest bidder is not saved in sealed bids
+- Auction created event is emitting total auctions count instead of id
+- English auction is not extended for bids at last moments, it reverts instead
+
+#### All these flaws are fixed in MultiAuctionV2, Some of the fixes are mentioned below:-
+
 ### 1. **Reentrancy Vulnerability in Bid and Withdraw Functions**
 
 **Problem**: In the original contract, there are potential **reentrancy vulnerabilities**, especially in the `placeBid()` and `endAuction()` functions. The contract makes external calls (e.g., transferring Ether to previous bidders) **before updating the internal state**.
@@ -181,6 +195,3 @@ This ensures that non-winners can withdraw their bids after a sealed-bid auction
     
 
 This way contract can keep track of the highest bidder in sealed auction.
-
-## Changes and fixes Conclusion
-- 
